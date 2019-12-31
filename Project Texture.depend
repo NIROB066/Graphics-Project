@@ -239,7 +239,7 @@
 	<iostream>
 	<GL/glut.h>
 
-1572423672 source:n:\4th year 2nd semister\graphics lab\project texture\main.cpp
+1577769156 source:n:\4th year 2nd semister\graphics lab\project texture\main.cpp
 	<GLUT/glut.h>
 	<GL/glut.h>
 	<math.h>
@@ -247,7 +247,7 @@
 	<bits/stdc++.h>
 	"RGBpixmap.cpp"
 
-1572374810 n:\4th year 2nd semister\graphics lab\project texture\rgbpixmap.cpp
+1572379103 n:\4th year 2nd semister\graphics lab\project texture\rgbpixmap.cpp
 	<fstream>
 	<iostream>
 	<GL/glut.h>

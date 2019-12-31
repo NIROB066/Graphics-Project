@@ -33,14 +33,21 @@ float choice=0;
 float x_rot=0,y_rot=0,z_rot=0;
 float rpy=0,rad=15;
 float n1=-1.2,n2=-1.4,n3=-7;
-float tx1=0,tx2=0,tx3=0;
-RGBpixmap pix[6];
+float tx1=0,tx2=0,tx3=0,resX,resY,resZ;
+float a,b,ar,frus=1;
+float fa=0,fb=0,fc=0;
+RGBpixmap pix[10];
 float h,w;
 
 const GLfloat light_ambient[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+
+const GLfloat light_ambient1[]  = { 0.0f, 0.0f, 1.0f, 1.0f };
+const GLfloat light_diffuse1[]  = { 0.0f, 0.0f, 1.0f, 1.0f };
+const GLfloat light_specular1[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+const GLfloat light_position1[] = { 2.0f, 5.0f, 5.0f, 0.0f };
 
 const GLfloat mat_ambient[]    = { 0.0f, 0.0f, 1.0f, 1.0f };
 const GLfloat mat_diffuse[]    = { 0.0f, 0.0f, 1.0f, 1.0f };
@@ -77,51 +84,154 @@ const GLfloat mat_diffuse_w1[]    = { 0.7f, 0.7f, 0.8f, 1.0f };
 const GLfloat mat_specular_w1[]   = { 0.8f, 0.9f, 0.9f, 1.0f };
 const GLfloat high_shininess_w1[] = { 100.0f };
 
+//spot light
+const GLfloat light_pos[] = { 10.0f, 5.0f, -10.0f, 1.0f };
+const GLfloat light_dir[]= {0.0f, 0.0f, -25.0f, 1.0f};
+const GLfloat light_r[]={10.0f};
+//spot light
+
 
 /* GLUT callback Handlers */
 
 static void resize(int width, int height)
 {
-    const float ar = (float) width / (float) height;
+    ar = (float) width / (float) height;
 
     glViewport(0, 0, width, height);
     h=height;w=width;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum(-ar, ar, -1.0, 1.0, 2.0, 100.0);
-
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity() ;
 }
 
+//koch curve
+GLfloat xComplexMin = -0.25, xComplexMax = 1.25;
+GLfloat yComplexMin = -0.75, yComplexMax = 0.75;
 
+GLfloat oldx = -0.7, oldy = 0.5;
+GLfloat lftx = oldx - 0.1, lfty = oldy - 0.1;
+GLfloat rhtx = oldx + 0.1, rhty = oldy + 0.1;
 
-/*void Triangle()
+double Depth=5;
+
+void drawkoch(GLfloat dir, GLfloat len, GLint iter)
 {
-    glBegin(GL_TRIANGLES);
-    //front face
-    glVertex3f(1.0,4.0,1.0);
-     glVertex3f(0,0,2.0);
-     glVertex3f(2.0,0,2.0);
+    GLdouble dirRad = 0.0174533 * dir;
+    GLfloat newX = oldx + len * cos(dirRad);
+    GLfloat newY = oldy + len * sin(dirRad);
+
+
+    lftx = (newX - 0.1)<lftx ? newX - 0.1 : lftx;
+    lfty = (newY - 0.1)<lfty ? newY - 0.1 : lfty;
+    rhtx = (newX + 0.1)>rhtx? newX + 0.1:rhtx;
+    rhty = (newY + 0.1)>rhty ? newY + 0.1 : rhty;
+
+
+    if (iter == 0) {
+        glVertex2f(oldx, oldy);
+        glVertex2f(newX, newY);
+        oldx = newX;
+        oldy = newY;
+    }
+    else {
+        iter--;
+
+
+        drawkoch(dir, len, iter);
+        dir += 60.0;
+        drawkoch(dir, len, iter);
+        dir -= 120.0;
+        drawkoch(dir, len, iter);
+        dir += 60.0;
+        drawkoch(dir, len, iter);
+    }
+}
+//
+//
+//
+void KochCurve(int depth) {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBegin(GL_LINES);
+
+
+    drawkoch(0.0, 0.05, depth);
+    drawkoch(+72.0, 0.05, depth);
+    drawkoch(+144.0, 0.05, depth);
+    drawkoch(216.0, 0.05, depth);
+    drawkoch(288.0, 0.05, depth);
+
     glEnd();
-     glBegin(GL_TRIANGLES);
-    //back face
-    glVertex3f(1.0,4.0,1.0);
-     glVertex3f(0,0,0);
-     glVertex3f(2.0,0,0);
+    glFlush();
+}
+//koch curve
+
+
+//new work
+void tex_cube()
+{
+    glBegin(GL_QUADS);
+
+        glTexCoord2f(0,0);
+        glVertex2d(0,0);
+        glTexCoord2f(1,0);
+        glVertex2d(1,0);
+        glTexCoord2f(1,1);
+        glVertex2d(1, 1);
+        glTexCoord2f(0,1);
+        glVertex2d(0,1);
     glEnd();
-    //right
-    glBegin(GL_TRIANGLES);
-     glVertex3f(1.0,4.0,1.0);
-     glVertex3f(0,0,0);
-     glVertex3f(0.0,0,2);
-    glEnd();
-    glBegin(GL_TRIANGLES);
-     glVertex3f(1.0,4.0,1.0);
-     glVertex3f(2,0,2);
-     glVertex3f(2.0,0,0);
-    glEnd();
-}*/
+}
+
+//new work
+
+void cube_texture()
+{
+          glPushMatrix();
+          glTranslated(0,0,0);
+          glScaled(2,2,2);
+          tex_cube();
+          glPopMatrix();
+
+
+          glPushMatrix();
+          glTranslated(2,0,0);
+          glRotated(90,0,1,0);
+          glScaled(2,2,2);
+          tex_cube();
+          glPopMatrix();
+
+
+          glPushMatrix();
+          glTranslated(0,0,-2);
+          glRotated(270,0,1,0);
+          glScaled(2,2,2);
+          tex_cube();
+          glPopMatrix();
+
+          glPushMatrix();
+          glTranslated(2,0,-2);
+          glRotated(180,0,1,0);
+          glScaled(2,2,2);
+          tex_cube();
+          glPopMatrix();
+
+          glPushMatrix();
+          glTranslated(0,2,0);
+          glRotated(-90,1,0,0);
+          glScaled(2,2,2);
+          tex_cube();
+          glPopMatrix();
+
+          glPushMatrix();
+          glTranslated(0,0,-2);
+          glRotated(90,1,0,0);
+          glScaled(2,2,2);
+          tex_cube();
+          glPopMatrix();
+}
+//new work texture cube
 void main_car()
 {
     glBegin(GL_QUADS);
@@ -554,7 +664,7 @@ void Car()
 
     glPushMatrix();
     //glColor3d(1,0.8,0);
-    glBindTexture(GL_TEXTURE_2D,2);
+    glBindTexture(GL_TEXTURE_2D,6);
     glEnable(GL_TEXTURE_2D);
     glTranslated(4,3,.3);
     glScaled(1.2,.6,1.28);
@@ -568,7 +678,7 @@ void Car()
 
     glPushMatrix();
    // glColor3d(0,1,1);
-    glBindTexture(GL_TEXTURE_2D,2);
+    glBindTexture(GL_TEXTURE_2D,6);
     glEnable(GL_TEXTURE_2D);
     glTranslated(10,3,.5);
     glScaled(.08,.56,1.2);
@@ -581,7 +691,7 @@ void Car()
 
     glPushMatrix();
   //  glColor3d(0,1,1);
-    glBindTexture(GL_TEXTURE_2D,2);
+    glBindTexture(GL_TEXTURE_2D,7);
     glEnable(GL_TEXTURE_2D);
     glTranslated(3.6,3,.5);
     glScaled(.08,.56,1.2);
@@ -593,7 +703,7 @@ void Car()
 
     glPushMatrix();
     // glColor3d(0,1,1);
-    glBindTexture(GL_TEXTURE_2D,2);
+    glBindTexture(GL_TEXTURE_2D,7);
     glEnable(GL_TEXTURE_2D);
     glTranslated(4.5,3,6.7);
     glScaled(1,.56,.06);
@@ -605,7 +715,7 @@ void Car()
 
     glPushMatrix();
    // glColor3d(0,1,1);
-    glBindTexture(GL_TEXTURE_2D,2);
+    glBindTexture(GL_TEXTURE_2D,7);
     glEnable(GL_TEXTURE_2D);
     glTranslated(4.5,3,0);
     glScaled(1,.56,.06);
@@ -662,7 +772,10 @@ void Car()
     glPushMatrix();
   //  glColor3d(0,0,0);
     glTranslated(3.3,0,0);
+    glBindTexture(GL_TEXTURE_2D,6);
+    glEnable(GL_TEXTURE_2D);
     main_wheel();
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
 
@@ -672,7 +785,10 @@ void Car()
 
  //   glColor3d(0,0,0);
     glTranslated(3.3,0,-6.9);
+    glBindTexture(GL_TEXTURE_2D,6);
+    glEnable(GL_TEXTURE_2D);
     main_wheel();
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
     /* 3rd wheel */
@@ -680,7 +796,10 @@ void Car()
     glPushMatrix();
  //   glColor3d(0,0,0);
     glTranslated(11,0,0);
+    glBindTexture(GL_TEXTURE_2D,6);
+    glEnable(GL_TEXTURE_2D);
     main_wheel();
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
 
@@ -690,7 +809,10 @@ void Car()
     glPushMatrix();
  //   glColor3d(0,0,0);
     glTranslated(11,0,-6.9);
+    glBindTexture(GL_TEXTURE_2D,6);
+    glEnable(GL_TEXTURE_2D);
     main_wheel();
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
 
@@ -785,31 +907,45 @@ void House()
     glBindTexture(GL_TEXTURE_2D,2);
     glEnable(GL_TEXTURE_2D);
     glTranslated(-50,-30,-190);
-    glRotated(90,1,0,0);
-    glScaled(25.5,30,.15);
-    main_car();
+    glRotated(450,1,0,0);
+    glScaled(100,70,.15);
+    cube_texture();
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
+    //floor
 
 //back wall
     glPushMatrix();
     glTranslated(-50,-30,-190);
-    glScaled(25.5,30,.15);
-    glBindTexture(GL_TEXTURE_2D,2);
+    glScaled(100,100,.15);
+    glBindTexture(GL_TEXTURE_2D,8);
     glEnable(GL_TEXTURE_2D);
-    main_car();
+    cube_texture();
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
+
+    //picture
+    glPushMatrix();
+    glBindTexture(GL_TEXTURE_2D,7);
+    glEnable(GL_TEXTURE_2D);
+    glTranslated(20,70,-189);
+    glScaled(50,50,0);
+    tex_cube();
+    glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
+    //picture
+
     //left wall
     glPushMatrix();
     glTranslated(-50,-30,-190);
     glRotated(-90,0,1,0);
-    glScaled(30,30,.15);
-    glBindTexture(GL_TEXTURE_2D,2);
+    glScaled(70,100,.15);
+    glBindTexture(GL_TEXTURE_2D,8);
     glEnable(GL_TEXTURE_2D);
-    main_car();
+    cube_texture();
     glDisable(GL_TEXTURE_2D);
     glPopMatrix();
+
 
     //table
     glTranslated(0,0,-20);
@@ -828,31 +964,21 @@ void House()
     glRotated(220,0,0,1);
     glTranslated(20,-5.5,0);
 
+    glTranslated(-3.5,2.5,0);
+    glScaled(2.5,2.5,1);
     Car();
 
 }
 
 //homework pitch,roll,yaw
-void my_new_pitch_roll_yaw(GLdouble x, GLdouble y, GLdouble z)
+void my_rotation(GLdouble x, GLdouble y, GLdouble z)
 {
     GLfloat m[16];
 
-    m[0] = cos(z)*cos(y);
-    m[4] = cos(z)*sin(y)*sin(x)-sin(z)*cos(x);
-    m[8] = cos(z)*sin(y)*cos(x)+sin(z)*sin(x);
-    m[12] = 0;
-    m[1] = sin(z)*cos(x);
-    m[5] = sin(z)*sin(y)*sin(x)+cos(z)*cos(x);
-    m[9] = sin(z)*sin(y)*cos(x)-cos(z)*sin(x);
-    m[13] = 0;
-    m[2] = -sin(y);
-    m[6] = cos(y)*sin(x);
-    m[10] = cos(y)*cos(x);
-    m[14] = 0;
-    m[3] = 0;
-    m[7] = 0;
-    m[11] = 0;
-    m[15] = 1;
+    m[0] = cos(z)*cos(y);m[4] = cos(z)*sin(y)*sin(x)-sin(z)*cos(x);m[8] = cos(z)*sin(y)*cos(x)+sin(z)*sin(x);m[12] = 0;
+    m[1] = sin(z)*cos(y);m[5] = sin(z)*sin(y)*sin(x)+cos(z)*cos(x);m[9] = sin(z)*sin(y)*cos(x)-cos(z)*sin(x);m[13] = 0;
+    m[2] = -sin(y);      m[6] = cos(y)*sin(x);                     m[10] = cos(y)*cos(x);                    m[14] = 0;
+    m[3] = 0;            m[7] = 0;                                 m[11] = 0;                                m[15] = 1;
 
     glMatrixMode(GL_MODELVIEW);
     glMultMatrixf(m);
@@ -879,48 +1005,7 @@ static void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor3d(1,0,0);
 
-   /* glPushMatrix();
-        glTranslated(-2.4,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidSphere(1,slices,stacks);
-    glPopMatrix();
 
-    glPushMatrix();
-        glTranslated(0,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidCone(1,1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(2.4,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidTorus(0.2,0.8,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(-2.4,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireSphere(1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(0,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireCone(1,1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(2.4,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireTorus(0.2,0.8,slices,stacks);
-    glPopMatrix();
-*/
     glViewport(0, 0, w/2, h);
     glPushMatrix();
 
@@ -929,17 +1014,25 @@ static void display(void)
     glRotated(degree1,0,1,0);
     glRotated(degree2,1,0,0);
     //pitch_roll_yaw
-    my_new_pitch_roll_yaw(x_rot,y_rot,z_rot);
+    //my_new_pitch_roll_yaw(x_rot,y_rot,z_rot);
     //pitch_roll_yaw
     glScalef(ss1,ss2,ss3);
     glRotated(20,1,0,0);
     glScaled(1.5,.70,2);
     //glTranslated(0,15,0);
     tt1=0;tt2=0;tt3=0;
+    //koch curve
+    glPushMatrix();
+    glTranslated(-5,42,0);
+    glTranslated(fx,fy,fz);
+    glScaled(.35,.35,.35);
+    KochCurve(Depth);
+    glPopMatrix();
+    //koch curve
     House();
     glPopMatrix();
 
-    glViewport(w/2, 0, w/1.8, h);
+    glViewport(w/2, 0, w/2, h);
     glPushMatrix();
 
     //glTranslatef(tt1,tt2,tt3);
@@ -947,7 +1040,7 @@ static void display(void)
     glRotated(degree1,0,1,0);
     glRotated(degree2,1,0,0);
     //pitch_roll_yaw
-    my_new_pitch_roll_yaw(x_rot,y_rot,z_rot);
+    //my_new_pitch_roll_yaw(x_rot,y_rot,z_rot);
     //pitch_roll_yaw
     glScalef(ss1,ss2,ss3);
     glRotated(20,1,0,0);
@@ -1021,7 +1114,49 @@ static void key(unsigned char key, int x, int y)
     case '!':
         choice=13;
         break;
+    case '@':
+        choice=100;
+        break;
     }
+    if(choice==100)
+    {
+        switch(key)
+        {
+        case'+':
+                ar+=.1;
+                frus+=.1;
+
+                glMatrixMode(GL_PROJECTION);
+                glLoadIdentity();
+                glFrustum(-ar, ar, -frus, frus, 2.0, 100.0);
+                glMatrixMode(GL_MODELVIEW);
+                glLoadIdentity() ;
+                break;
+        case'-':
+                ar-=.1;
+                frus-=.1;
+
+                glMatrixMode(GL_PROJECTION);
+                glLoadIdentity();
+                glFrustum(-ar, ar, -frus, frus, 2.0, 100.0);
+                glMatrixMode(GL_MODELVIEW);
+                glLoadIdentity() ;
+                break;
+        }
+    }
+    if(choice==11)
+    {
+        switch(key)
+        {
+        case '+':
+            Depth++;
+            break;
+        case '-':
+            Depth--;
+            break;
+        }
+    }
+
     if(choice==13)
     {
         switch(key)
@@ -1031,6 +1166,12 @@ static void key(unsigned char key, int x, int y)
             break;
         case 'f':
             glDisable(GL_LIGHT0);
+            break;
+        case 'b':
+            glEnable(GL_LIGHT1);
+            break;
+        case 'n':
+            glDisable(GL_LIGHT1);
             break;
         }
     }
@@ -1132,19 +1273,55 @@ static void key(unsigned char key, int x, int y)
     //yaw end
 
 
-   /* //roll
+   //roll
     if(choice==9)
     {
         switch(key)
         {
-        case '+':
-            x_rot+=.5;
+        case '+'://yaw
+            a=cx-ex;
+            b=cz-ez;
+            resX=a*cos(.1)+b*sin(.1) ;
+            resZ=b*cos(.1)-a*sin(.1);
+            cx=resX+ex;
+            cz=resZ+ez;
             break;
-        case '-':
-            x_rot-=.5;
+        case'-'://yaw
+            a=cx-ex;
+            b=cz-ez;
+            resX=a*cos(.1)-b*sin(.1) ;
+            resZ=b*cos(.1)+a*sin(.1);
+            cx=resX+ex;
+            cz=resZ+ez;
             break;
+        case'#'://pitch
+            hx=hx*cos(.1)+hy*sin(.1) ;
+            hy=hy*cos(.1)-hx*sin(.1);
+            break;
+        case'$'://pitch
+            hx=hx*cos(.1)-hy*sin(.1) ;
+            hy=hy*cos(.1)+hx*sin(.1);
+            break;
+        case'%'://roll
+            a=cy-ey;
+            b=cz-ez;
+            resY=a*cos(.1)-b*sin(.1) ;
+            resZ=b*cos(.1)+a*sin(.1);
+            cy=resY+ey;
+            cz=resZ+ez;
+            break;
+        case'^'://roll
+            a=cy-ey;
+            b=cz-ez;
+            resY=a*cos(.1)+b*sin(.1) ;
+            resZ=b*cos(.1)-a*sin(.1);
+            cy=resY+ey;
+            cz=resZ+ez;
+            break;
+
+
         }
-    }
+    }/*
     //roll end
 
     //pitch
@@ -1385,20 +1562,26 @@ void Init()
     pix[0].makeCheckImage();
 	pix[0].setTexture(1);
 
-	pix[1].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\cwall.bmp");
+	pix[1].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\real_floor.bmp");
 	pix[1].setTexture(2);
 
-	pix[2].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\table.bmp");
+	pix[2].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\table6.bmp");
 	pix[2].setTexture(3);
 
-	pix[3].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Textureteapot.bmp");
+	pix[3].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\teapot.bmp");
 	pix[3].setTexture(4);
 
     pix[4].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\red.bmp");
 	pix[4].setTexture(5);
 
-    pix[5].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\spre.bmp");
+    pix[5].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\gr.bmp");
 	pix[5].setTexture(6);
+
+	pix[6].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\deyal.bmp");
+	pix[6].setTexture(7);
+
+	pix[7].readBMPFile("N:\\4th Year 2nd Semister\\Graphics lab\\Project Texture\\brick1.bmp");
+	pix[7].setTexture(8);
 /*
     pix[4].readBMPFile("C:\\Users\\Shauqi\\Google Drive\\CSE KUET\\Even Semesters\\CSE 4208 Computer Graphics Laboratory\\lab4 texturing\\cone.bmp");
 	pix[4].setTexture(5);*/
@@ -1410,12 +1593,13 @@ void Init()
 int main(int argc, char *argv[])
 {
     cout<<"'x' to rotate x-direction\n'y' to rotate y-direction\n'z' to rotate z-direction\n'e' to rotate eye-direction\n'h' to rotate head-direction\n'c' to rotate camera-direction\n'.' to rotate yaw_roll_pitch-direction\n's' to scaling\n't' to rotate translate\n"<<endl;
+    cout<<"'r' to roll"<<endl;
     glutInit(&argc, argv);
-    glutInitWindowSize(640,480);
+    glutInitWindowSize(1340,780);
     glutInitWindowPosition(10,10);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
-    glutCreateWindow("GLUT Shapes");
+    glutCreateWindow("Nirob's World");
 
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
@@ -1438,8 +1622,38 @@ int main(int argc, char *argv[])
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
+    glLightfv(GL_LIGHT1, GL_AMBIENT,  light_ambient);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE,  light_diffuse);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
+    //glLightfv(GL_LIGHT1, GL_POSITION, light_position);
+
+    //spot light
+    glLightfv(GL_LIGHT1, GL_SPOT_CUTOFF, light_r);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light_dir);
+    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, .2);
+    glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
+    //spot light
+
     Init();
     glutMainLoop();
 
     return EXIT_SUCCESS;
 }
+
+
+
+
+/*
+void two_D_cube()
+{
+    glBegin(GL_QUADS);
+
+
+    glVertex3f(0,0,0);
+    glVertex3f(5,0,0);
+    glVertex3f(5,5,0);
+    glVertex3f(0,5,0);
+
+    glEnd();
+}
+*/
